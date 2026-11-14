@@ -10,7 +10,7 @@ Each README promise and the test that holds it. "Bots" is `test/suite.mjs` on th
 | --- | --- |
 | Ordered per-world list, sent together; empty list sends nothing | unit `PackPlanTest` (order, inserted pack, empty list); bots "a world with two packs gets both, in order", "an empty list removes Packmule's" |
 | Same packs across worlds send nothing; different packs swap only Packmule's | unit `samePacksChangeNothing`, `swapReplacesTheWholeList`, `sharedStartIsKept`; bots teleport, same pack, End, swap |
-| Never removes or replaces another plugin's pack | unit `emptyListRemovesOnlyPackmulesPacks`; bots "Packmule never removed a pack it didn't send", BlueMinimap's pack through switches, reloads and hopping |
+| Never removes or replaces another plugin's pack | unit `emptyListRemovesOnlyPackmulesPacks`; bots "Packmule never removed a pack it didn't send", BlueMapMini's pack through switches, reloads and hopping |
 | Every pack required: decline kicked, no answer kicked after 60 s | bots "a decline is kicked", "kicked after the timeout"; the 60 s default in the long run (`PACKMULE_TEST_LONG`) |
 | Failed download retried twice, then the player stays in; admins told | bots retry, "the player stays in without it", admin warning, quiet once retries run out, recovery |
 | **Players never see pack names, world names or addresses** | bots "the player is told once for the world… without internal names" |
@@ -20,8 +20,7 @@ Each README promise and the test that holds it. "Bots" is `test/suite.mjs` on th
 | `server.properties` pack warns | bots |
 | **Fail closed on a broken config:** reload keeps the old one; startup sends no packs and players still get in | bots "a reload with broken config warns and keeps the old config", "fails safe: players get in, with no packs from Packmule and no kick" |
 | Commands need permission | bots "a player without permission can't…", "an op can" |
-| Pack IDs never change (clients see them) | unit `packIdsAreTheSameAsBeforeTheRename` |
-| Upgrade from ResourcePackButler | unit `MigrationTest`, `OldPermissionsTest`; bots old commands and folder copy |
+| Pack IDs are stable (clients see them) | unit `packIdsUseThePackmuleNamespace` |
 
 **Gaps added this audit:** none. Every promise already had a test.
 

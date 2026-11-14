@@ -65,8 +65,8 @@ class PackPlanTest {
     }
 
     @Test
-    void packIdsAreTheSameAsBeforeTheRename() {
-        // Clients see these IDs. If they changed, every player would drop and re-download every pack once.
-        assertEquals(java.util.UUID.fromString("5eac6b96-e786-39ea-badf-55cc15c67d05"), PackPlan.idFor("main"));
+    void packIdsUseThePackmuleNamespace() {
+        // Clients see these IDs. If they change, every player re-downloads every pack once (they did in 0.3.0, with the move to packmule:pack:).
+        assertEquals(java.util.UUID.fromString("7a4d3d03-22bb-36c5-8e61-df5f60b72d5f"), PackPlan.idFor("main"));
     }
 }

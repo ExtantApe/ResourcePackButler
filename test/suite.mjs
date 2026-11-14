@@ -12,10 +12,10 @@ if (VERSION === '26.3') process.env.PACKMULE_TEST_STILL = '1' // see Bot: 26.3 k
 const LONG = process.env.PACKMULE_TEST_LONG !== '0'
 const jar = n => path.join(JARS, n)
 const plugins = [jar('multiverse-core-5.8.2.jar'), jar('multiverse-inventories-5.3.6.jar'), jar('bluemap-5.29-paper.jar'),
-  (() => { const d = path.join(process.env.HOME, 'Code/BlueMinimap/build/libs'); const f = readdirSync(d).filter(n => /^BlueMinimap-[\d.]+\.jar$/.test(n)); if (f.length !== 1) throw new Error('expected one BlueMinimap jar in ' + d); return path.join(d, f[0]) })()]
+  (() => { const d = path.join(process.env.HOME, 'Code/BlueMapMini/build/libs'); const f = readdirSync(d).filter(n => /^BlueMapMini-[\d.]+\.jar$/.test(n)); if (f.length !== 1) throw new Error('expected one BlueMapMini jar in ' + d); return path.join(d, f[0]) })()]
 plugins.push(jar('ViaVersion-5.12.3-SNAPSHOT.jar'), jar('ViaBackwards-5.12.3-SNAPSHOT.jar'))
 
-const HUD_ID = (() => { // BlueMinimap's fixed pack ID (unchanged from its BlueMapHUD days): UUID.nameUUIDFromBytes("bluemaphud:pack")
+const HUD_ID = (() => { // BlueMapMini's fixed pack ID (unchanged from its BlueMapHUD days): UUID.nameUUIDFromBytes("bluemaphud:pack")
   const h = createHash('md5').update('bluemaphud:pack').digest(); h[6] = (h[6] & 0x0f) | 0x30; h[8] = (h[8] & 0x3f) | 0x80
   const x = h.toString('hex'); return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`
 })()
@@ -58,11 +58,11 @@ const TEST_TIMEOUT = 'answer-timeout-seconds: 6\n'
 
 // ---------- server ----------
 const dir = freshServer(`suite-${VERSION}`, { paper: jar(`paper-${VERSION}.jar`), plugins, packmuleConfig: goodConfig(TEST_TIMEOUT) })
-// BlueMinimap hosts its pack on port 8164 by default, which other sessions' test servers may hold. Give it one of ours.
-{ const hud = readFileSync(path.join(process.env.HOME, 'Code/BlueMinimap/src/main/resources/config.yml'), 'utf8')
-  if (!/^  port: 8164$/m.test(hud)) throw new Error("BlueMinimap's default config no longer has port: 8164")
-  const { mkdirSync } = await import('node:fs'); mkdirSync(path.join(dir, 'plugins/BlueMinimap'), { recursive: true })
-  writeFileSync(path.join(dir, 'plugins/BlueMinimap/config.yml'), hud.replace(/^  port: 8164$/m, '  port: 25615')) }
+// BlueMapMini hosts its pack on port 8164 by default, which other sessions' test servers may hold. Give it one of ours.
+{ const hud = readFileSync(path.join(process.env.HOME, 'Code/BlueMapMini/src/main/resources/config.yml'), 'utf8')
+  if (!/^  port: 8164$/m.test(hud)) throw new Error("BlueMapMini's default config no longer has port: 8164")
+  const { mkdirSync } = await import('node:fs'); mkdirSync(path.join(dir, 'plugins/BlueMapMini'), { recursive: true })
+  writeFileSync(path.join(dir, 'plugins/BlueMapMini/config.yml'), hud.replace(/^  port: 8164$/m, '  port: 25615')) }
 const s = new Server({ dir, java: JAVA })
 process.on('exit', () => { if (s.proc && s.proc.exitCode === null) s.proc.kill('SIGKILL') })
 const packmuleLog = from => s.since(from).filter(l => /\[Packmule\]/.test(l))
@@ -98,8 +98,8 @@ check('no warning about server.properties', !log.some(l => /server\.properties/.
 for (const w of ['alpha', 'beta', 'gamma', 'bare', 'delta']) await s.ask(`mv create ${w} normal --world-type FLAT --no-structures`, 2500)
 await s.waitLog(/delta/, 15000)
 await s.ask('difficulty peaceful', 500) // flat worlds spawn slimes, which kill bots and drop their items
-const hudOn = s.log.some(l => /Enabling BlueMinimap/.test(l)) && !s.log.some(l => /Error occurred while enabling BlueMinimap|Could not load.*BlueMinimap/.test(l))
-check('control: BlueMinimap is enabled', hudOn, s.log.filter(l => /BlueMinimap|BlueMap\]/.test(l)).slice(-5).join(' | '))
+const hudOn = s.log.some(l => /Enabling BlueMapMini/.test(l)) && !s.log.some(l => /Error occurred while enabling BlueMapMini|Could not load.*BlueMapMini/.test(l))
+check('control: BlueMapMini is enabled', hudOn, s.log.filter(l => /BlueMapMini|BlueMap\]/.test(l)).slice(-5).join(' | '))
 
 section('Basics')
 const a = await newBot('Alder')
@@ -107,16 +107,11 @@ check('a bot joins', a.spawned)
 check('on join it gets the world pack, at its per-build address', await settled(a, [['one', one.sha1]]), showStack(a))
 check('the address sent is the per-build one', packmuleStack(a)[0]?.url.endsWith(`/b/${one.sha1}.zip`))
 const hudSeen = await until(() => a.stack.some(p => p.uuid === HUD_ID && p.state === 'loaded'), 8000)
-check('control: BlueMinimap sent and the bot loaded its own pack', hudSeen, showStack(a))
+check('control: BlueMapMini sent and the bot loaded its own pack', hudSeen, showStack(a))
 a.chat.length = 0; a.bot.chat('/packmule status'); await sleep(1500)
 check('a player without permission can\'t use /packmule', !a.chat.some(l => /^Packs/.test(l)), a.chat.join(' | '))
 await s.ask(`op ${a.username}`, 800); a.chat.length = 0; a.bot.chat('/packmule status'); await sleep(1500)
 check('an op can, through the Brigadier command', a.chat.some(l => /^Packs/.test(l)) && a.chat.some(l => /one: live/.test(l)), a.chat.join(' | '))
-for (const old of ['butler', 'resourcepackbutler', 'rpb']) {
-  let mk = s.mark(); a.chat.length = 0; a.bot.chat(`/${old} status`); await sleep(1500)
-  check(`the old command /${old} still works for one release`, a.chat.some(l => /^Packs/.test(l)), a.chat.join(' | '))
-  check(`and /${old} says it's the old name, in chat and in the log`, a.chat.some(l => /old names for \/packmule/.test(l)) && s.log.slice(mk).some(l => /old names for \/packmule/.test(l)))
-}
 await s.ask(`deop ${a.username}`, 500)
 let m = a.mark()
 await s.ask(`tp ${a.username} 20 -60 20`, 1500)
@@ -132,7 +127,7 @@ await mvtp(a, 'beta')
 check('a world with two packs gets both, in order', await settled(a, [['one', one.sha1], ['two', two.sha1]]), showStack(a))
 await mvtp(a, 'bare')
 check('an empty list removes Packmule\'s packs', await until(() => packmuleStack(a).length === 0, 5000), showStack(a))
-check('and leaves BlueMinimap\'s pack alone', !hudSeen || a.stack.some(p => p.uuid === HUD_ID), showStack(a))
+check('and leaves BlueMapMini\'s pack alone', !hudSeen || a.stack.some(p => p.uuid === HUD_ID), showStack(a))
 let mark = s.mark()
 a.chat.length = 0
 await mvtp(a, 'delta')
@@ -157,22 +152,22 @@ await s.ask(`kill ${a.username}`, 3000)
 check('respawning in the same world sends nothing', a.since(m).filter(e => e.type !== 'sent').length === 0)
 check('Packmule never removed a pack it didn\'t send', foreignRemovals(a, 0).length === 0, JSON.stringify(foreignRemovals(a, 0)))
 
-section('BlueMinimap alongside')
+section('BlueMapMini alongside')
 if (hudOn && hudSeen) {
   m = a.mark()
   for (const w of ['alpha', 'beta', 'bare', 'world']) await mvtp(a, w, 900)
   await settled(a, [['one', one.sha1]])
-  check('switching worlds never removes or reloads BlueMinimap\'s pack', !a.since(m).some(e => e.uuid === HUD_ID && e.type !== 'sent'), JSON.stringify(a.since(m).filter(e => e.uuid === HUD_ID)))
+  check('switching worlds never removes or reloads BlueMapMini\'s pack', !a.since(m).some(e => e.uuid === HUD_ID && e.type !== 'sent'), JSON.stringify(a.since(m).filter(e => e.uuid === HUD_ID)))
   check('its pack is still loaded', a.stack.some(p => p.uuid === HUD_ID && p.state === 'loaded'), showStack(a))
   m = a.mark()
-  await s.ask('blueminimap reload', 3000)
+  await s.ask('bluemapmini reload', 3000)
   const hudResent = a.since(m).some(e => e.type === 'add' && e.uuid === HUD_ID)
-  console.log(`  note: /blueminimap reload ${hudResent ? 're-sent' : 'did not re-send'} its pack`)
+  console.log(`  note: /bluemapmini reload ${hudResent ? 're-sent' : 'did not re-send'} its pack`)
   for (const w of ['alpha', 'world']) await mvtp(a, w, 1500)
-  check('after BlueMinimap reloads, Packmule\'s packs still follow the world', await settled(a, [['one', one.sha1]]), showStack(a))
-  check('and BlueMinimap\'s pack is still there', a.stack.some(p => p.uuid === HUD_ID), showStack(a))
-  check('Packmule sent no removal for BlueMinimap\'s pack', foreignRemovals(a, 0).length === 0)
-} else check('BlueMinimap test skipped: it isn\'t enabled', false)
+  check('after BlueMapMini reloads, Packmule\'s packs still follow the world', await settled(a, [['one', one.sha1]]), showStack(a))
+  check('and BlueMapMini\'s pack is still there', a.stack.some(p => p.uuid === HUD_ID), showStack(a))
+  check('Packmule sent no removal for BlueMapMini\'s pack', foreignRemovals(a, 0).length === 0)
+} else check('BlueMapMini test skipped: it isn\'t enabled', false)
 
 section('Hash updates')
 await mvtp(a, 'world'); await settled(a, [['one', one.sha1]])
@@ -231,7 +226,7 @@ await sleep(4000)
 check('a bot that never answers isn\'t kicked early', !e.ended)
 await until(() => e.ended, 8000)
 check('and is kicked after the timeout, with a clear message', e.ended && /prompt timed out/.test(e.kicked ?? '') && /within 6 seconds/.test(e.kicked ?? ''), e.kicked)
-const f = await newBot('Fir', { mode: 'fail', only: PACK_IDS }) // BlueMinimap kicks on its own failed downloads
+const f = await newBot('Fir', { mode: 'fail', only: PACK_IDS }) // BlueMapMini kicks on its own failed downloads
 await sleep(9000)
 check('a bot whose downloads fail is retried, then let in', !f.ended && f.since(0, 'add').filter(x => x.uuid === ID.one).length === 3, `${f.since(0, 'add').filter(x => x.uuid === ID.one).length} sends, ended ${f.ended}, ${f.kicked}`)
 check('and is told, once, that the pack couldn\'t be downloaded', f.chat.filter(l => /couldn't be downloaded/.test(l)).length === 1, f.chat.join(' | '))
@@ -248,7 +243,7 @@ check('after hopping faster than a pack loads, the final packs match the final w
 for (let i = 0; i < 10; i++) { s.cmd(`mvtp ${a.username} ${i % 2 ? 'alpha' : 'world'}`); await sleep(100) }
 check('back and forth, too', await settled(a, [['two', two.sha1]], 15000), showStack(a))
 check('nobody was kicked for it', !a.ended)
-check('the BlueMinimap pack survived the hopping', !hudSeen || a.stack.some(p => p.uuid === HUD_ID), showStack(a))
+check('the BlueMapMini pack survived the hopping', !hudSeen || a.stack.some(p => p.uuid === HUD_ID), showStack(a))
 a.loadMs = 150
 
 section('Timing')
@@ -323,26 +318,6 @@ check('a pack in server.properties gives a startup warning', s.log.some(l => /se
 for (const x of bots) await x.quit()
 await s.stop()
 writeProps(dir)
-
-section('Upgrade from ResourcePackButler')
-{
-  const now = path.join(dir, 'plugins/Packmule'), old = path.join(dir, 'plugins/ResourcePackButler')
-  const sha = f => createHash('sha256').update(readFileSync(f)).digest('hex')
-  const files = readdirSync(now).filter(f => !statSync(path.join(now, f)).isDirectory())
-  const before = Object.fromEntries(files.map(f => [f, sha(path.join(now, f))]))
-  renameSync(now, old)
-  await s.start(); await s.waitLog(/packs checked/, 20000)
-  check('plugins/ResourcePackButler is copied to plugins/Packmule on first start, byte for byte',
-    files.length > 0 && files.every(f => existsSync(path.join(now, f)) && sha(path.join(now, f)) === before[f]), files.join(','))
-  check('the old folder is left as it was', files.every(f => sha(path.join(old, f)) === before[f]))
-  check('the log says what was copied', s.log.some(l => /Copied plugins\/ResourcePackButler to plugins\/Packmule/.test(l)))
-  check('the copied config is the one in use', !s.log.some(l => /sends no packs until it's fixed/.test(l)) && s.log.some(l => /packs checked/.test(l)))
-  await s.stop()
-  writeFileSync(path.join(old, 'config.yml'), 'packs: [broken')
-  await s.start(); await s.waitLog(/packs checked/, 20000)
-  check('a second start never copies again', !s.log.some(l => /Copied plugins\/ResourcePackButler/.test(l)) && sha(path.join(now, 'config.yml')) === before['config.yml'])
-  await s.stop()
-}
 
 section('Errors')
 check('no exceptions from Packmule in the log', s.exceptions().length === 0, s.exceptions().slice(0, 5).join('\n'))

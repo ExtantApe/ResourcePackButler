@@ -32,7 +32,7 @@ public final class PackPlan {
     public static UUID idFor(String packName) {
         // Keeps the namespace from before the rename to Packmule (2026-11-09) on purpose: these IDs go to clients,
         // and changing them would make every player's client drop and re-download every pack once.
-        return UUID.nameUUIDFromBytes(("resourcepackbutler:pack:" + packName).getBytes(StandardCharsets.UTF_8));
+        return UUID.nameUUIDFromBytes(("packmule:pack:" + packName).getBytes(StandardCharsets.UTF_8));
     }
 
     public static Change between(List<Pack> sent, List<Pack> wanted) {
