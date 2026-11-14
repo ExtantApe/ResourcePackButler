@@ -52,8 +52,6 @@ public final class Packmule extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        String moved = Migration.copyIfMissing(getDataFolder().toPath().resolveSibling("ResourcePackButler"), getDataFolder().toPath());
-        if (moved != null) getLogger().warning(moved);
         saveDefaultConfig();
         checks = Executors.newFixedThreadPool(4, runnable -> {
             Thread thread = new Thread(runnable, "Packmule-check");
@@ -264,14 +262,14 @@ public final class Packmule extends JavaPlugin implements Listener {
         getLogger().warning(message);
         Component line = Component.text("[Packmule] " + message, NamedTextColor.RED);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (allowed(player, "packmule.notify")) player.sendMessage(line);
+            if (player.hasPermission("packmule.notify")) player.sendMessage(line);
         }
     }
 
     @EventHandler
     public void onAdminJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (!allowed(player, "packmule.notify") || config == null) return;
+        if (!player.hasPermission("packmule.notify") || config == null) return;
         List<String> dead = new ArrayList<>();
         for (String name : config.packs().keySet()) {
             Outcome outcome = outcome(name);
@@ -325,9 +323,4 @@ public final class Packmule extends JavaPlugin implements Listener {
             if (worldsUsing(config, pack).isEmpty()) getLogger().info("Pack '" + pack + "' isn't used by any world.");
         }
     }
-
-    private final OldPermissions oldPermissions = new OldPermissions(line -> getLogger().warning(line));
-
-    /** True for {@code node}, or its old {@code resourcepackbutler.*} name for one release. See {@link OldPermissions}. */
-    public boolean allowed(org.bukkit.permissions.Permissible who, String node) { return oldPermissions.allowed(who, node); }
 }

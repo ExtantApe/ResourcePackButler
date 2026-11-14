@@ -231,7 +231,7 @@ export class Bot {
 
 /** Packmule's pack ID for a pack name: Java's UUID.nameUUIDFromBytes, a version 3 UUID. */
 export function packmuleId(name) {
-  const h = createHash('md5').update('resourcepackbutler:pack:' + name).digest()
+  const h = createHash('md5').update('packmule:pack:' + name).digest()
   h[6] = (h[6] & 0x0f) | 0x30; h[8] = (h[8] & 0x3f) | 0x80
   const x = h.toString('hex')
   return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`

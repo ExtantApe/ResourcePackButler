@@ -20,8 +20,7 @@ Each README promise and the test that holds it. "Bots" is `test/suite.mjs` on th
 | `server.properties` pack warns | bots |
 | **Fail closed on a broken config:** reload keeps the old one; startup sends no packs and players still get in | bots "a reload with broken config warns and keeps the old config", "fails safe: players get in, with no packs from Packmule and no kick" |
 | Commands need permission | bots "a player without permission can't…", "an op can" |
-| Pack IDs never change (clients see them) | unit `packIdsAreTheSameAsBeforeTheRename` |
-| Upgrade from ResourcePackButler | unit `MigrationTest`, `OldPermissionsTest`; bots old commands and folder copy |
+| Pack IDs are stable (clients see them) | unit `packIdsUseThePackmuleNamespace` |
 
 **Gaps added this audit:** none. Every promise already had a test.
 

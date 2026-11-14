@@ -90,15 +90,6 @@ If `config.yml` has a mistake, Packmule says what it is. On `/packmule reload` i
 
 `packmule.notify` (default op) shows dead-link and failed-download warnings in chat.
 
-## Upgrading from ResourcePackButler
-
-Packmule was called ResourcePackButler up to 0.1.0, and renamed in 0.2.0. Nothing else changed in how it works.
-
-- With the server stopped, swap `ResourcePackButler-0.1.0.jar` for `Packmule-0.2.0.jar`.
-- On its first start, Packmule copies `plugins/ResourcePackButler/` to `plugins/Packmule/` if `plugins/Packmule/` doesn't exist yet, so your config and last good hashes come across unchanged. The old folder is left as it was; delete it once you're happy. If `plugins/Packmule/` already exists, nothing is copied.
-- For 0.2.x only, the old names still work and log a line saying what to change: `/butler`, `/resourcepackbutler` and `/rpb`, and the `resourcepackbutler.*` permissions. They go in the next release. Grant `packmule.*` instead.
-- Pack IDs sent to clients are the same as before, so players don't re-download anything.
-
 ## Build
 
 Java 25.

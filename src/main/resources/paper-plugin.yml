@@ -20,15 +20,3 @@ permissions:
   packmule.notify:
     description: See warnings about dead links and failed downloads in chat.
     default: op
-  resourcepackbutler.recheck:
-    description: The old name for packmule.recheck, from before the rename. Still works in 0.2.x and is removed in the next release.
-    default: false
-  resourcepackbutler.reload:
-    description: The old name for packmule.reload, from before the rename. Still works in 0.2.x and is removed in the next release.
-    default: false
-  resourcepackbutler.status:
-    description: The old name for packmule.status, from before the rename. Still works in 0.2.x and is removed in the next release.
-    default: false
-  resourcepackbutler.notify:
-    description: The old name for packmule.notify, from before the rename. Still works in 0.2.x and is removed in the next release.
-    default: false

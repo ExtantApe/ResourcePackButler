@@ -112,11 +112,6 @@ a.chat.length = 0; a.bot.chat('/packmule status'); await sleep(1500)
 check('a player without permission can\'t use /packmule', !a.chat.some(l => /^Packs/.test(l)), a.chat.join(' | '))
 await s.ask(`op ${a.username}`, 800); a.chat.length = 0; a.bot.chat('/packmule status'); await sleep(1500)
 check('an op can, through the Brigadier command', a.chat.some(l => /^Packs/.test(l)) && a.chat.some(l => /one: live/.test(l)), a.chat.join(' | '))
-for (const old of ['butler', 'resourcepackbutler', 'rpb']) {
-  let mk = s.mark(); a.chat.length = 0; a.bot.chat(`/${old} status`); await sleep(1500)
-  check(`the old command /${old} still works for one release`, a.chat.some(l => /^Packs/.test(l)), a.chat.join(' | '))
-  check(`and /${old} says it's the old name, in chat and in the log`, a.chat.some(l => /old names for \/packmule/.test(l)) && s.log.slice(mk).some(l => /old names for \/packmule/.test(l)))
-}
 await s.ask(`deop ${a.username}`, 500)
 let m = a.mark()
 await s.ask(`tp ${a.username} 20 -60 20`, 1500)
@@ -323,26 +318,6 @@ check('a pack in server.properties gives a startup warning', s.log.some(l => /se
 for (const x of bots) await x.quit()
 await s.stop()
 writeProps(dir)
-
-section('Upgrade from ResourcePackButler')
-{
-  const now = path.join(dir, 'plugins/Packmule'), old = path.join(dir, 'plugins/ResourcePackButler')
-  const sha = f => createHash('sha256').update(readFileSync(f)).digest('hex')
-  const files = readdirSync(now).filter(f => !statSync(path.join(now, f)).isDirectory())
-  const before = Object.fromEntries(files.map(f => [f, sha(path.join(now, f))]))
-  renameSync(now, old)
-  await s.start(); await s.waitLog(/packs checked/, 20000)
-  check('plugins/ResourcePackButler is copied to plugins/Packmule on first start, byte for byte',
-    files.length > 0 && files.every(f => existsSync(path.join(now, f)) && sha(path.join(now, f)) === before[f]), files.join(','))
-  check('the old folder is left as it was', files.every(f => sha(path.join(old, f)) === before[f]))
-  check('the log says what was copied', s.log.some(l => /Copied plugins\/ResourcePackButler to plugins\/Packmule/.test(l)))
-  check('the copied config is the one in use', !s.log.some(l => /sends no packs until it's fixed/.test(l)) && s.log.some(l => /packs checked/.test(l)))
-  await s.stop()
-  writeFileSync(path.join(old, 'config.yml'), 'packs: [broken')
-  await s.start(); await s.waitLog(/packs checked/, 20000)
-  check('a second start never copies again', !s.log.some(l => /Copied plugins\/ResourcePackButler/.test(l)) && sha(path.join(now, 'config.yml')) === before['config.yml'])
-  await s.stop()
-}
 
 section('Errors')
 check('no exceptions from Packmule in the log', s.exceptions().length === 0, s.exceptions().slice(0, 5).join('\n'))
