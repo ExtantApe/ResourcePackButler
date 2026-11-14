@@ -8,7 +8,7 @@ A Paper plugin that sends each world its own required resource packs, and warns 
 
 - Each world has an ordered list of packs. They're sent together with the multi-pack API, and later packs sit on top of earlier ones. A world with an empty list gets no packs from Packmule.
 - Moving between worlds with the same packs sends nothing. Moving to a world with different packs swaps only Packmule's packs.
-- Packmule never removes or replaces a pack it didn't send. Another plugin's pack, such as BlueMinimap's, stays put.
+- Packmule never removes or replaces a pack it didn't send. Another plugin's pack, such as BlueMapMini's, stays put.
 - Every pack is required. A player who declines is kicked. A client that doesn't answer the prompt in 60 seconds is kicked.
 - A failed download is sent again twice. If it still fails, the player stays in without that pack and admins are told which world and pack. Nobody is kicked over a hosting problem.
 - At startup, Packmule downloads every pack and checks its SHA-1. A 404, a timeout, a wrong hash or a malformed address is reported with the worlds it affects. That pack is skipped until it's fixed, and the rest keep working. Startup doesn't wait for the check.
@@ -113,7 +113,7 @@ cd test && npm install
 PACKMULE_TEST_WORK=/tmp/rpb PACKMULE_TEST_JARS=/path/to/jars PACKMULE_TEST_JAVA=/path/to/java25 node suite.mjs 26.3
 ```
 
-`PACKMULE_TEST_JARS` holds `paper-<version>.jar` for each version, Multiverse-Core 5.8.2, Multiverse-Inventories 5.3.6, `bluemap-5.29-paper.jar`, and ViaVersion and ViaBackwards 5.12.3. BlueMinimap and Waystation come from their own builds in `~/Code`.
+`PACKMULE_TEST_JARS` holds `paper-<version>.jar` for each version, Multiverse-Core 5.8.2, Multiverse-Inventories 5.3.6, `bluemap-5.29-paper.jar`, and ViaVersion and ViaBackwards 5.12.3. BlueMapMini and Waystation come from their own builds in `~/Code`.
 
 ## What hasn't been tested
 
@@ -123,7 +123,7 @@ Only a real client can tell:
 - Whether a player who clicks Disconnect on the prompt sees Packmule's kick message, or the game's own screen. The client may leave before the kick arrives.
 - How the prompt and kick text read on screen, line breaks included.
 - Whether switching feels acceptable when worlds use large packs.
-- Whether packs stack in the right order next to BlueMinimap's, and whether its font still draws.
+- Whether packs stack in the right order next to BlueMapMini's, and whether its font still draws.
 - What happens across a server transfer.
 - How older clients connected through ViaVersion treat the pack format.
 

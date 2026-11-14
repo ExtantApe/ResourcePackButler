@@ -22,7 +22,7 @@
 #    sit on top of earlier ones. An empty list [] means Packmule sends that world nothing.
 #    A world that isn't listed also gets nothing, and Packmule warns about it at startup.
 #
-# Packmule only ever removes packs it sent. Other plugins' packs (BlueMinimap's, say) are left alone.
+# Packmule only ever removes packs it sent. Other plugins' packs (BlueMapMini's, say) are left alone.
 # Leave resource-pack= empty in server.properties: a pack there fights Packmule's.
 
 packs: {}
