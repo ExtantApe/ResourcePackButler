@@ -113,6 +113,16 @@ class LinkCheckerTest {
     }
 
     @Test
+    void aPerBuildFileThatIsntWhatItsNameSaysIsDead() throws Exception {
+        // pack set relies on this: a file named for one SHA-1 that serves another is refused, so the old url stays.
+        String named = "c".repeat(40);
+        files.put("/p/" + named + ".zip", pack("not that build"));
+        var outcome = checker.check(new PackSource("a", base + "/p/" + named + ".zip", named, null), null);
+        assertFalse(outcome.live());
+        assertTrue(outcome.deadReason().startsWith("wrong hash"), outcome.deadReason());
+    }
+
+    @Test
     void timeoutIsDeadAndQuick() {
         files.put("/slow", pack("s"));
         long start = System.nanoTime();
