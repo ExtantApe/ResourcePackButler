@@ -47,6 +47,9 @@ public final class Packmule extends JavaPlugin implements Listener {
     private record Checked(PackSource source, Outcome outcome) {
     }
 
+    /** One pack change at a time, so two callers can't race on config.yml. */
+    private volatile boolean setting;
+
     @Override
     public void onEnable() {
         String moved = Migration.copyIfMissing(getDataFolder().toPath().resolveSibling("ResourcePackButler"), getDataFolder().toPath());
@@ -123,6 +126,59 @@ public final class Packmule extends JavaPlugin implements Listener {
         warnAboutWorlds();
         startCheck(null, false);
         return List.of();
+    }
+
+    /**
+     * Points a pack at a new per-build address (D189). Downloads it off the main thread and checks its SHA-1 against
+     * the file name. Only a pass is written to config.yml (comments kept), and then the config is reloaded as if by
+     * /packmule reload. Any failure leaves config.yml and the pack as they were. {@code done} gets the outcome on the
+     * main thread: null when it worked, or the refusal.
+     */
+    public boolean setPack(com.extantape.packmule.command.PackSet.Plan plan, java.util.function.Consumer<com.extantape.packmule.command.PackSet.Refused> done) {
+        if (setting) return false;
+        setting = true;
+        LinkChecker checker = new LinkChecker(Duration.ofSeconds(config.checkTimeoutSeconds()));
+        CompletableFuture.supplyAsync(() -> checker.check(new PackSource(plan.pack(), plan.url(), plan.sha1(), null), null), checks)
+                .whenComplete((outcome, error) -> {
+                    if (!isEnabled()) return;
+                    Bukkit.getScheduler().runTask(this, () -> {
+                        try {
+                            if (error != null) done.accept(com.extantape.packmule.command.PackSet.refusal(com.extantape.packmule.command.PackSet.CHECK_FAILED, "The check stopped early, so nothing changed."));
+                            else if (!outcome.live()) done.accept(com.extantape.packmule.command.PackSet.refusal(com.extantape.packmule.command.PackSet.CHECK_FAILED,
+                                    "The new address failed its check (" + outcome.deadReason() + "), so the old one stays."));
+                            else done.accept(write(plan));
+                        } finally {
+                            setting = false;
+                        }
+                    });
+                });
+        return true;
+    }
+
+    /** Writes the checked address and reloads. On any problem config.yml goes back to what it was. */
+    private com.extantape.packmule.command.PackSet.Refused write(com.extantape.packmule.command.PackSet.Plan plan) {
+        java.nio.file.Path file = getDataFolder().toPath().resolve("config.yml");
+        String before;
+        try {
+            before = java.nio.file.Files.readString(file);
+            String after = com.extantape.packmule.command.PackSet.rewrite(before, plan);
+            java.nio.file.Path tmp = file.resolveSibling("config.yml.packmule-new");
+            java.nio.file.Files.writeString(tmp, after);
+            java.nio.file.Files.move(tmp, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (com.extantape.packmule.command.PackSet.Refused r) {
+            return r;
+        } catch (java.io.IOException e) {
+            getLogger().warning("Couldn't write config.yml for pack '" + plan.pack() + "': " + e.getMessage());
+            return com.extantape.packmule.command.PackSet.refusal("internal", "config.yml couldn't be written, so nothing changed. The server log has the details.");
+        }
+        List<String> errors = reload();
+        if (!errors.isEmpty()) {
+            try { java.nio.file.Files.writeString(file, before); } catch (java.io.IOException e) { getLogger().severe("Couldn't put config.yml back: " + e.getMessage()); }
+            reload();
+            return com.extantape.packmule.command.PackSet.refusal("config-problem", "The changed config.yml didn't load (" + String.join("; ", errors) + "), so it was put back.");
+        }
+        getLogger().info("Pack '" + plan.pack() + "' now points at its new build, " + plan.sha1() + ".");
+        return null;
     }
 
     /** Re-tests every link and re-reads every hash file. Players online keep what they have until they change worlds. */

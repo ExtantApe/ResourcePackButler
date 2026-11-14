@@ -14,6 +14,9 @@ permissions:
   packmule.status:
     description: Use /packmule status.
     default: op
+  packmule.pack.set:
+    description: Use /packmule pack set, which points a pack at a new per-build address after checking it. Leaf Juice uses it.
+    default: op
   packmule.notify:
     description: See warnings about dead links and failed downloads in chat.
     default: op

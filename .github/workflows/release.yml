@@ -35,4 +35,4 @@ jobs:
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" build/libs/Packmule-*.jar --title "$GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md"
+        run: gh release create "$GITHUB_REF_NAME" "build/libs/Packmule-${GITHUB_REF_NAME#v}.jar" --title "$GITHUB_REF_NAME" --notes-file "docs/releases/$GITHUB_REF_NAME.md"

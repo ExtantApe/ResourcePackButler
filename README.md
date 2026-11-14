@@ -78,6 +78,15 @@ If `config.yml` has a mistake, Packmule says what it is. On `/packmule reload` i
 | `/packmule recheck` | `packmule.recheck` | Re-test every link and re-read every hash file |
 | `/packmule reload` | `packmule.reload` | Read `config.yml` again, then re-check |
 | `/packmule status [player]` | `packmule.status` | Each pack's state, each world's list, or what one player has |
+| `/packmule pack set <pack> <url>` | `packmule.pack.set` | Point a pack at a new per-build address. Packmule downloads it first and checks its SHA-1 against the file name. Only a pass is written to `config.yml`, with its comments kept, and then the config is reloaded. Anything else leaves the old address. |
+| `/packmule describe` | `packmule.status` | Lists the commands tools can use |
+
+`pack set` and `describe` also answer tools such as Leaf Juice. Add `--json <id>` at the end and the answer is one line in the [Signalbox](https://github.com/ExtantApe/Signalbox) format. A pass answers `{"ok":true,"pack":"main","sha1":"…","check":"passed"}`. A refusal answers `ok:false` with a code:
+- `bad-argument` for an address that isn't https, or a file name that isn't the SHA-1;
+- `not-found` for an unknown pack;
+- `check-failed` when the download fails or its SHA-1 doesn't match;
+- `busy` while another change is being checked;
+- `config-problem` when `config.yml` can't be read or changed.
 
 `packmule.notify` (default op) shows dead-link and failed-download warnings in chat.
 
